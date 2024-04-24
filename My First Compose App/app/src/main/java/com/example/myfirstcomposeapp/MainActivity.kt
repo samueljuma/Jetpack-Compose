@@ -3,6 +3,9 @@ package com.example.myfirstcomposeapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,12 +47,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MyApp(modifier: Modifier =Modifier, ){
+fun MyApp(modifier: Modifier = Modifier) {
     var shouldShowOnboarding by rememberSaveable { mutableStateOf(true) }
     Surface(modifier) {
-        if (shouldShowOnboarding){
-            OnboardingScreen(onContinueClicked = {shouldShowOnboarding = false})
-        }else{
+        if (shouldShowOnboarding) {
+            OnboardingScreen(onContinueClicked = { shouldShowOnboarding = false })
+        } else {
             Greetings()
         }
     }
@@ -57,34 +60,46 @@ fun MyApp(modifier: Modifier =Modifier, ){
 
 @Composable
 fun Greetings(
-    modifier: Modifier =Modifier,
-    names: List<String> = List(1000) {"$it"}
-){
+    modifier: Modifier = Modifier,
+    names: List<String> = List(1000) { "$it" }
+) {
     LazyColumn(modifier = modifier.padding(vertical = 4.dp)) {
-        items (items = names){ name ->
+        items(items = names) { name ->
             Greeting(name = name)
         }
     }
 }
+
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     var expanded by rememberSaveable { mutableStateOf(false) } // both remember and rememeberSaveable work
-    val extraPadding = if(expanded) 48.dp else 0.dp
-    Surface (
+
+    //Animation in action
+    val extraPadding by animateDpAsState(
+        if (expanded) 48.dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+    Surface(
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
     ) {
         Row(modifier = Modifier.padding(24.dp)) {
-            Column (modifier = modifier
-                .weight(1f)
-                .padding(bottom = extraPadding)
-            ){
+            Column(
+                modifier = modifier
+                    .weight(1f)
+                    // coerceAtLeast makes sure that padding is never negative,
+                    // otherwise it could crash the app
+                    .padding(bottom = extraPadding.coerceAtLeast(0.dp))
+            ) {
                 Text(text = "Hello")
                 Text(text = name)
             }
-            ElevatedButton(onClick = { expanded =!expanded}) {
-                Text(if(expanded) "Show Less" else "Show More")
-                
+            ElevatedButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) "Show Less" else "Show More")
+
             }
         }
 
@@ -97,12 +112,12 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun OnboardingScreen(
     modifier: Modifier = Modifier,
     onContinueClicked: () -> Unit
-){
-    Column (
+) {
+    Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
+    ) {
         Text(text = "Welcome to the Basics Codelab!")
         Button(
             onClick = onContinueClicked,
@@ -115,7 +130,7 @@ fun OnboardingScreen(
 
 @Preview
 @Composable
-fun MyAppPreview(){
+fun MyAppPreview() {
     MyFirstComposeAppTheme {
         MyApp(Modifier.fillMaxSize())
     }
@@ -131,7 +146,7 @@ fun GreetingsPreview() {
 
 @Preview(showBackground = true, widthDp = 320, heightDp = 320)
 @Composable
-fun OnboardingPreview(){
+fun OnboardingPreview() {
     MyFirstComposeAppTheme {
         OnboardingScreen(onContinueClicked = {}) // Do Nothing | Perfect for Preview
     }
